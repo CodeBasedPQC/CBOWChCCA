@@ -1,4 +1,5 @@
 
+
 import numpy as np
 import random
 import hashlib
@@ -13,17 +14,6 @@ R.<X> = P.quotient(P1)
 Frob = Fqm.frobenius_endomorphism()
 S = OrePolynomialRing(Fqm, Frob, 'x')
 
-"""
-def random_small_vector_genenration(Extension, Length, Weight):
-    B = matrix(Fqm.base_ring(), Weight, Extension, 0)
-    while B.rank() != Weight:
-        B = matrix(Fqm.base_ring(),[vector(Fqm.random_element()) for i in range(Weight)])
-    C = matrix(Fqm.base_ring(),Length,Extension,0)
-    while C.rank() != Weight:
-        C = matrix(Fqm.base_ring(),Length,Weight,[Fqm.base_ring().random_element() for _ in range(Length*Weight)]) * B
-    return vector(Fqm,[C[i] for i in range(Length)])
-"""
-
 def random_small_vector_genenration(Extension, Length, Weight):
     B = matrix(Fqm.base_ring(), Weight, Extension, 0)
     while B.rank() != Weight:
@@ -35,11 +25,11 @@ def random_small_vector_genenration(Extension, Length, Weight):
 
 
 def random_small_vector_generation_from_seed(Extension, Length, Weight, Seed):
-    set_random_seed(Seed)    # 这个种子必须是类似‘01010192311’的这种数字字符串格式
+    set_random_seed(Seed)   
     return random_small_vector_genenration(Extension, Length, Weight)
 
 def random_small_blockwise_vector_generation_from_seed(Extension, Length1, Length2, Weight1, Weight2, Seed):
-    set_random_seed(Seed)    # 这个种子必须是类似‘01010192311’的这种数字字符串格式
+    set_random_seed(Seed)   
     e1 = random_small_vector_generation_from_seed(Extension, Length1, Weight1, Seed)
     e2 = random_small_vector_generation_from_seed(Extension, Length2, Weight2, Seed)
     return vector(Fqm,list(e1)+list(e2))
@@ -60,15 +50,12 @@ def String_to_Vector(Field_Size, String):
     return vector(GF(Field_Size),String)
 
 
-def hash_bindigest_to_binary(text, hash_type='sha256', binary_length=256):  # text 必须是字符串格式，任意字符串格式都行
-    h = hashlib.new(hash_type)  # 使用hashlib创建哈希对象
+def hash_bindigest_to_binary(text, hash_type='sha256', binary_length=256):  
+    h = hashlib.new(hash_type) 
     h.update(text.encode('utf-8'))
-    digest_bytes = h.digest()   # 获取哈希值的二进制表示
-    # 将字节转换成二进制字符串
-    # f'{byte:08b}' 即为 format(byte, '08b')
+    digest_bytes = h.digest()   
     return ''.join(f'{byte:08b}' for byte in digest_bytes)[:binary_length]  
 
-# 由种子生成向量组, 输出结果由种子决定。
 def Oracle_G(RHO_Length, x_Length, x_0_Length, Seed):
     set_random_seed(Seed)
     RHO = random_vector(Fqm.base_ring(),RHO_Length)
@@ -113,15 +100,12 @@ def KEM_KGen(Para0, Para1):
     E_0_0 = ideal_matrix(e_0, L).transpose()
     E_0_1 = ideal_matrix(e_1, L).transpose()
     E_0 = block_matrix(2,1,[E_0_0, E_0_1])
-    #a_0_list = Para[0:,0].list(); a_1_list = Para[0:,k].list()
-    #a_0 = R(a_0_list); a_1 = R(a_1_list) 
-    #s = a_0 * e_0 + a_1 * e_1 
     s = Para0 * e_0 + Para1 * e_1 
     S_0 = ideal_matrix(s, L).transpose()
     S_1 = ideal_matrix(R.random_element(), L).transpose()
     return (S_0, S_1), (E_0, 0)
 
-
+# Encapsulation
 def KEM_Encap(Para, Public_Key0, Public_Key1):
     R = random_vector(GF(2),lamda)
     R_to_Sring = Vector_to_String(R)
@@ -137,7 +121,7 @@ def KEM_Encap(Para, Public_Key0, Public_Key1):
     C_1 = String_to_Vector(q,hash_bindigest_to_binary(text1, hash_type='sha256', binary_length=lamda)) +  R
     return C_0, hat_x_0, C_1, hat_x_1, y
 
-
+# Decapsulation
 def KEM_Decap(Para, Private_Key, Ciphertext):
     ct = Ciphertext; sk = Private_Key[0]
     errored_codeword = ct[1] - ct[4] * sk
